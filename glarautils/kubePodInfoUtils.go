@@ -25,20 +25,24 @@ func extractDataFromPodList(pl []v1.Pod, clientset *kubernetes.Clientset) models
 
 	// fmt.Println(len(repl))
 	for i, value := range repl {
-
 		tmp.InfoList[i] = extractDataFromPod(value, clientset)
 	}
 	return tmp
 }
 
 // ExtracDataFromPod extracts data from the pod
-func extractDataFromPod(pi v1.Pod, clientset *kubernetes.Clientset) models.GlaraPodInfo {
+func extractDataFromPod(pd v1.Pod, clientset *kubernetes.Clientset) models.GlaraPodInfo {
+	// fmt.Println(pd)
 
 	tmp := models.GlaraPodInfo{
-		PodName:        pi.GetName(),
-		PodLog:         getPodLogs(pi, clientset),
-		OwnerReference: pi.ObjectMeta.GetOwnerReferences()[0].Kind,
+		PodName: pd.GetName(),
+		// PodLogs: pd.GetPod(),
+		PodLog: getPodLogs(pd, clientset),
+		// OwnerReference: pd.ObjectMeta.GetOwnerReferences()[0].Kind,
+		OwnerReference: pd.OwnerReferences[0].Kind,
 	}
+
+	// fmt.Println(tmp.OwnerReference[0])
 	// fmt.Println(tmp.PodLog, tmp.PodName)
 	return tmp
 }
@@ -48,7 +52,7 @@ func GetglaraPodListInfo(clientset *kubernetes.Clientset, namespace string) mode
 
 	podlist := K8sPodList(clientset, namespace)
 	if podlist == nil {
-		log.Panic("The Request returned ZERO pod")
+		log.Println("The Request returned ZERO pod")
 	}
 	result := extractDataFromPodList(podlist, clientset)
 

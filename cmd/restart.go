@@ -5,6 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"errors"
 	"log"
 
 	"github.com/seungjinyu/glara/glarautils"
@@ -17,15 +18,33 @@ var restartCmd = &cobra.Command{
 	Use:   "restart",
 	Short: "Restart an kubernetes resource",
 	Long:  `Testing for restart method`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 4 {
+			return errors.New("requried more arguments")
+		}
+		return nil
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		KUBE_ENV := args[0]
 		namespace := args[1]
-		statefulsetName := args[1]
+		resourceName := args[2]
+		resourceType := args[3]
 		var kubecli settings.ClientSetInstance
+		// var result []string
 		settings.ClientSetting(&kubecli, KUBE_ENV)
+		var err error
+		switch resourceType {
+		case "rs":
+			err = glarautils.RestartReplicaSet(namespace, resourceName, kubecli.Clientset)
+		case "stf":
+			err = glarautils.RestartStatefulSet(namespace, resourceName, kubecli.Clientset)
+		}
 
-		result := glarautils.RestartStatefulSet(namespace, statefulsetName, kubecli.Clientset)
-		log.Println("result is ", result)
+		if err != nil {
+			log.Println(err)
+		} else {
+			log.Println("[Pods has been deleted]")
+		}
 	},
 }
 

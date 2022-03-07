@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"errors"
+	"log"
 
 	"github.com/seungjinyu/glara/glarautils"
 	"github.com/seungjinyu/glara/settings"
@@ -54,7 +55,11 @@ var inspectCmd = &cobra.Command{
 
 		settings.ClientSetting(&kubecli, KUBE_ENV)
 
-		glarautils.InspectPod(KUBE_ENV, namespace, pod, rStr, kubecli)
+		err := glarautils.InspectPod(KUBE_ENV, namespace, pod, rStr, kubecli)
+
+		if err != nil {
+			log.Println(err)
+		}
 
 	},
 }
