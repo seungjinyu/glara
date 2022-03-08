@@ -1,0 +1,9 @@
+version: "3.4"
+
+services:
+  develop:
+    image: registry.develop.vsmart00.com/glara
+    build:
+      context: ./
+      dockerfile: dockerfiles/dockerfile.out
+      network: host

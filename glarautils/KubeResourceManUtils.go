@@ -134,6 +134,7 @@ func RestartReplicaSet(namespace, ReplicaSets string, clientset *kubernetes.Clie
 	// return podList
 }
 
+// InspectPod inspects the pods and returns an error if there is no pod.
 func InspectPod(KUBE_ENV, namespace, pod, rStr string, kubecli settings.ClientSetInstance) error {
 
 	for {
