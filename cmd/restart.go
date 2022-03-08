@@ -17,7 +17,25 @@ import (
 var restartCmd = &cobra.Command{
 	Use:   "restart",
 	Short: "Restart an kubernetes resource",
-	Long:  `Testing for restart method`,
+	Long: `Restart Method
+	Required arguments
+	- env 
+	  whether the command is executed inside or outside the cluster
+	  inside = IN , outside = OUT 
+	- namespace
+	  The namespace where the pod is in
+	- pod name 
+	  The name of the pod you would like to inspect, not meaning the full name but the basic name 
+	- pod owner reference
+	  The type of the pod owner reference
+
+	[FORMAT]
+
+	  glara inspect [ENV] [NAMESPACE] [PODNAME] 
+
+	[USAGE EXAMPLE]
+
+	  glara inspect OUT mongodb mongo "SSL peer certificate validation failed"`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) < 4 {
 			return errors.New("requried more arguments")
