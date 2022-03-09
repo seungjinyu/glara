@@ -5,5 +5,17 @@ services:
     image: registry.develop.vsmart00.com/glara
     build:
       context: ./
-      dockerfile: dockerfiles/dockerfile.out
+      dockerfile: dockerfiles/dockerfile
+      network: host
+  russia:
+    image: registry.russia.vsmart00.com/glara
+    build:
+      context: ./
+      dockerfile: dockerfiles/dockerfile
+      network: host
+  clever:
+    image: registry.clever.vsmart00.com/glara
+    build:
+      context: ./
+      dockerfile: dockerfiles/dockerfile
       network: host

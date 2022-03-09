@@ -3,13 +3,17 @@ package settings
 import (
 	"flag"
 	"fmt"
+	"net"
+	"os"
 	"path/filepath"
 
 	"github.com/seungjinyu/glara/errorHandler"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/client-go/util/homedir"
+	"k8s.io/klog"
 )
 
 func ClientSetting(cli *ClientSetInstance, kubeEnv string) {
@@ -28,14 +32,37 @@ func ClientSetting(cli *ClientSetInstance, kubeEnv string) {
 
 type ClientSetInstance struct {
 	Clientset *kubernetes.Clientset
-	Appenv    string
 }
 
 func (c *ClientSetInstance) CreateInClientSet() error {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
+	// config, err := rest.InClusterConfig()
+
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+
+	const (
+		tokenFile  = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+		rootCAFile = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+	)
+
+	token := os.Getenv("serviceaccount-token")
+	host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
+
+	tlsClientConfig := rest.TLSClientConfig{}
+
+	if _, err := certutil.NewPool(rootCAFile); err != nil {
+		klog.Errorf("Expected to load root CA config from %s, but got err: %v", rootCAFile, err)
+	} else {
+		tlsClientConfig.CAFile = rootCAFile
 	}
+
+	config := &rest.Config{
+		Host:            "https://" + net.JoinHostPort(host, port),
+		TLSClientConfig: tlsClientConfig,
+		BearerToken:     string(token),
+	}
+
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())

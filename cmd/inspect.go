@@ -5,8 +5,7 @@ Copyright © 2022 NAME HERE seungjinyu93@gmail.com
 package cmd
 
 import (
-	"errors"
-	"log"
+	"os"
 
 	"github.com/seungjinyu/glara/glarautils"
 	"github.com/seungjinyu/glara/settings"
@@ -38,28 +37,19 @@ var inspectCmd = &cobra.Command{
 	  glara inspect OUT mongodb mongo "SSL peer certificate validation failed"
 
 	`,
-	Args: func(cmd *cobra.Command, args []string) error {
-		if len(args) < 3 {
-			return errors.New("arguments are missing check the cmd options\nglara inspect -h")
-		}
-		return nil
-	},
 	Run: func(cmd *cobra.Command, args []string) {
-		KUBE_ENV := args[0]
-		namespace := args[1]
+
+		KUBE_ENV := os.Getenv("KUBE_ENV")
+		namespace := os.Getenv("NAMESPACE")
 		// namespace := args[0]
-		pod := args[2]
-		rStr := args[3]
-		// fmt.Println(rStr)
+		pod := os.Getenv("POD")
+		rStr := os.Getenv("RESTARTLOG")
+
 		var kubecli settings.ClientSetInstance
 
 		settings.ClientSetting(&kubecli, KUBE_ENV)
 
-		err := glarautils.InspectPod(KUBE_ENV, namespace, pod, rStr, kubecli)
-
-		if err != nil {
-			log.Println(err)
-		}
+		glarautils.InspectPod(namespace, pod, rStr, kubecli)
 
 	},
 }

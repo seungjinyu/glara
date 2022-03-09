@@ -33,11 +33,14 @@ func extractDataFromPodList(pl []v1.Pod, clientset *kubernetes.Clientset) models
 // ExtracDataFromPod extracts data from the pod
 func extractDataFromPod(pd v1.Pod, clientset *kubernetes.Clientset) models.GlaraPodInfo {
 	// fmt.Println(pd)
-
+	podLog, err := getPodLogs(pd, clientset)
+	if err != nil {
+		log.Println(err)
+	}
 	tmp := models.GlaraPodInfo{
 		PodName: pd.GetName(),
 		// PodLogs: pd.GetPod(),
-		PodLog: getPodLogs(pd, clientset),
+		PodLog: podLog,
 		// OwnerReference: pd.ObjectMeta.GetOwnerReferences()[0].Kind,
 		OwnerReference: pd.OwnerReferences[0].Kind,
 	}
@@ -147,7 +150,7 @@ func K8sPod(clientset *kubernetes.Clientset, namespace, requestPodName string) (
 // }
 
 // getPodLogs Here is what we came up with,, eventually using client-go library:
-func getPodLogs(pod v1.Pod, clientset *kubernetes.Clientset) string {
+func getPodLogs(pod v1.Pod, clientset *kubernetes.Clientset) (string, error) {
 
 	podLogOpts := v1.PodLogOptions{}
 	nsPodsData := clientset.CoreV1().Pods(pod.Namespace)
@@ -158,7 +161,7 @@ func getPodLogs(pod v1.Pod, clientset *kubernetes.Clientset) string {
 	podLogs, err := req.Stream(context.TODO())
 
 	if err != nil {
-		return "error in opening stream"
+		return "error in opening stream", err
 	}
 
 	defer podLogs.Close()
@@ -168,8 +171,8 @@ func getPodLogs(pod v1.Pod, clientset *kubernetes.Clientset) string {
 	_, err = io.Copy(buf, podLogs)
 
 	if err != nil {
-		return "error in copy information from podLogs to buf"
+		return "error in copy information from podLogs to buf", err
 	}
 
-	return buf.String()
+	return buf.String(), nil
 }

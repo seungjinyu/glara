@@ -2,7 +2,6 @@ package glarautils
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -15,141 +14,62 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// RestareResources restarts the resoucres by there ownerreferences type
-// func RestartResources(namespace, resourceName, resourceType string, clientset *kubernetes.Clientset) error {
-
-// 	// if resourceType == "Statefulset"{
-
-// 	// }
-
-// 	result, _ := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
-
-// 	var rList []string
-
-// 	for _, v := range result.Items {
-// 		log.Println(v.GetName())
-// 		if strings.Contains(v.GetName(), resourceName) {
-// 			rList = append(rList, v.GetName())
-// 		}
-// 	}
-
-// 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	// var podList []string
-
-// 	for _, v := range pods.Items {
-// 		for _, j := range rList {
-// 			if strings.Contains(v.Name, j) {
-// 				// podList = append(podList, v.Name)
-// 				err = clientset.CoreV1().Pods(namespace).Delete(
-// 					context.TODO(),
-// 					j,
-// 					metav1.DeleteOptions{},
-// 				)
-// 				return err
-// 			}
-// 		}
-// 	}
-
-// 	return nil
-
-// }
-
 // RestartStatefulSet restarts the stateful set
-func RestartStatefulSet(namespace, statefulsetName string, clientset *kubernetes.Clientset) error {
+func RestartStatefulSet(namespace, StatefulSetPodName string, clientset *kubernetes.Clientset) error {
+	err := clientset.CoreV1().Pods(namespace).Delete(
+		context.TODO(),
+		StatefulSetPodName,
+		metav1.DeleteOptions{},
+	)
 
-	result, _ := clientset.AppsV1().StatefulSets(namespace).List(context.TODO(), metav1.ListOptions{})
+	return err
+}
 
-	var sfList []string
+func RestartDaemonSet(namespace, DaemonSetPodName string, clientset *kubernetes.Clientset) error {
 
-	for _, v := range result.Items {
-		log.Println(v.GetName())
-		if strings.Contains(v.GetName(), statefulsetName) {
-			sfList = append(sfList, v.GetName())
-		}
-	}
+	err := clientset.CoreV1().Pods(namespace).Delete(
+		context.TODO(),
+		DaemonSetPodName,
+		metav1.DeleteOptions{},
+	)
+	return err
 
-	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		panic(err)
-	}
-
-	// var podList []string
-
-	for _, v := range pods.Items {
-		for _, j := range sfList {
-			if strings.Contains(v.Name, j) {
-				// podList = append(podList, v.Name)
-				err = clientset.CoreV1().Pods(namespace).Delete(
-					context.TODO(),
-					j,
-					metav1.DeleteOptions{},
-				)
-				return err
-			}
-		}
-	}
-	return nil
-	// return podList
 }
 
 // RestartStatefulSet restarts the replicaset
-func RestartReplicaSet(namespace, ReplicaSets string, clientset *kubernetes.Clientset) error {
+func RestartReplicaSet(namespace, ReplicaSetPodName string, clientset *kubernetes.Clientset) error {
 
-	result, _ := clientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{})
+	err := clientset.CoreV1().Pods(namespace).Delete(
+		context.TODO(),
+		ReplicaSetPodName,
+		metav1.DeleteOptions{},
+	)
 
-	var rsList []string
-
-	for _, v := range result.Items {
-		if strings.Contains(v.GetName(), ReplicaSets) {
-			rsList = append(rsList, v.GetName())
-		}
-	}
-
-	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		panic(err)
-	}
-
-	// var podList []string
-
-	for _, v := range pods.Items {
-		for _, j := range rsList {
-			if strings.Contains(v.Name, j) {
-				// podList = append(podList, v.Name)
-				err = clientset.CoreV1().Pods(namespace).Delete(
-					context.TODO(),
-					v.Name,
-					metav1.DeleteOptions{},
-				)
-				return err
-			}
-		}
-	}
-
-	return nil
-	// return podList
+	return err
 }
 
 // InspectPod inspects the pods and returns an error if there is no pod.
-func InspectPod(KUBE_ENV, namespace, pod, rStr string, kubecli settings.ClientSetInstance) error {
+func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance) error {
 
 	for {
 		var tmpPodList []models.GlaraPodInfo
-		fmt.Println("Inspect called namespace:", namespace, " pod: ", pod)
+		fmt.Println("Inspect called namespace:", namespace, " pod: ", pod, " rStr: ", rStr)
 		datas := GetglaraPodListInfo(
 			kubecli.Clientset,
 			namespace,
 		)
+
 		for _, v := range datas.InfoList {
-			if strings.Contains(v.PodName, pod) && strings.Contains(v.PodLog, rStr) {
-				tmpPodList = append(tmpPodList, v)
+			if strings.Contains(v.PodName, pod) {
+				if strings.Contains(v.PodLog, rStr) {
+					tmpPodList = append(tmpPodList, v)
+				}
 			}
 		}
 
+		for _, v := range tmpPodList {
+			fmt.Println(v.PodName)
+		}
 		if len(tmpPodList) != 0 {
 			for _, v := range tmpPodList {
 				inspectResult := strings.Contains(v.PodLog, rStr)
@@ -158,16 +78,19 @@ func InspectPod(KUBE_ENV, namespace, pod, rStr string, kubecli settings.ClientSe
 					"LOG CONTAIN", strconv.FormatBool(inspectResult),
 					"TYPE", v.OwnerReference)
 				switch v.OwnerReference {
+
 				case "StatefulSet":
-					log.Println("StatefulSet")
-					err := RestartStatefulSet(namespace, pod, kubecli.Clientset)
+					err := RestartStatefulSet(namespace, v.PodName, kubecli.Clientset)
 					if err != nil {
 						log.Println(err)
 					}
-
 				case "ReplicaSet":
-					log.Println("ReplicaSet")
-					err := RestartReplicaSet(namespace, pod, kubecli.Clientset)
+					err := RestartReplicaSet(namespace, v.PodName, kubecli.Clientset)
+					if err != nil {
+						log.Println(err)
+					}
+				case "DaemonSet":
+					err := RestartDaemonSet(namespace, v.PodName, kubecli.Clientset)
 					if err != nil {
 						log.Println(err)
 					}
@@ -175,7 +98,7 @@ func InspectPod(KUBE_ENV, namespace, pod, rStr string, kubecli settings.ClientSe
 
 			}
 		} else {
-			return errors.New("there is no element for the given condition please try to set up an another condition")
+			log.Println("There is no pod that matches the condition")
 		}
 
 		time.Sleep(time.Second * 5)

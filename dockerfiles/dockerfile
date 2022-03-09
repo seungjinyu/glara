@@ -6,12 +6,12 @@ COPY . .
 
 RUN go mod download 
 
-RUN cp -av envs/out.cluster.env ./.env
+# RUN cp -av envs/out.cluster.env ./.env
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o kubelog-go .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o glara .
 
 FROM scratch
 
 COPY --from=builder /usr/local/app/ /
 
-CMD ["/glara"]
+ENTRYPOINT [ "/glara","inspect" ] 
