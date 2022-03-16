@@ -1,0 +1,7 @@
+bases:
+  - "../base"
+
+images:
+  - name: glara
+    newName: registry.russia.vsmart00.com/glara
+    newTag: latest

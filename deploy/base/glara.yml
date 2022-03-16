@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: glara
-          image: registry.clever.vsmart00.com/glara
+          image: glara
           imagePullPolicy: Always
           env:
             - name: KUBE_ENV
@@ -29,7 +29,7 @@ spec:
             - name : serviceaccount-token
               valueFrom:
                 secretKeyRef:
-                  name: glara-token-v6vkr
+                  name: glara-token
                   key: token
           ports:
             - containerPort: 8080
