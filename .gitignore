@@ -1,2 +1,4 @@
 glara
 .env
+docker-compose.yaml
+deploy/glara-docker.sh

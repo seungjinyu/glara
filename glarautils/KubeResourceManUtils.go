@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -14,8 +15,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// RestartStatefulSet restarts the stateful set
-func RestartStatefulSet(namespace, StatefulSetPodName string, clientset *kubernetes.Clientset) error {
+// DeleteStatefulSetPod restarts the stateful set
+func DeleteStatefulSetPod(namespace, StatefulSetPodName string, clientset *kubernetes.Clientset) error {
 	err := clientset.CoreV1().Pods(namespace).Delete(
 		context.TODO(),
 		StatefulSetPodName,
@@ -25,7 +26,7 @@ func RestartStatefulSet(namespace, StatefulSetPodName string, clientset *kuberne
 	return err
 }
 
-func RestartDaemonSet(namespace, DaemonSetPodName string, clientset *kubernetes.Clientset) error {
+func DeleteDaemonSetPod(namespace, DaemonSetPodName string, clientset *kubernetes.Clientset) error {
 
 	err := clientset.CoreV1().Pods(namespace).Delete(
 		context.TODO(),
@@ -37,7 +38,7 @@ func RestartDaemonSet(namespace, DaemonSetPodName string, clientset *kubernetes.
 }
 
 // RestartStatefulSet restarts the replicaset
-func RestartReplicaSet(namespace, ReplicaSetPodName string, clientset *kubernetes.Clientset) error {
+func DeleteReplicaSetPod(namespace, ReplicaSetPodName string, clientset *kubernetes.Clientset) error {
 
 	err := clientset.CoreV1().Pods(namespace).Delete(
 		context.TODO(),
@@ -80,17 +81,17 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 				switch v.OwnerReference {
 
 				case "StatefulSet":
-					err := RestartStatefulSet(namespace, v.PodName, kubecli.Clientset)
+					err := DeleteStatefulSetPod(namespace, v.PodName, kubecli.Clientset)
 					if err != nil {
 						log.Println(err)
 					}
 				case "ReplicaSet":
-					err := RestartReplicaSet(namespace, v.PodName, kubecli.Clientset)
+					err := DeleteReplicaSetPod(namespace, v.PodName, kubecli.Clientset)
 					if err != nil {
 						log.Println(err)
 					}
 				case "DaemonSet":
-					err := RestartDaemonSet(namespace, v.PodName, kubecli.Clientset)
+					err := DeleteDaemonSetPod(namespace, v.PodName, kubecli.Clientset)
 					if err != nil {
 						log.Println(err)
 					}
@@ -101,7 +102,12 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 			log.Println("There is no pod that matches the condition")
 		}
 
-		time.Sleep(time.Second * 5)
+		intervalTime, err := strconv.Atoi(os.Getenv("INTERVAL_TIME"))
+		if err != nil {
+			log.Println(err)
+		}
+
+		time.Sleep(time.Second * time.Duration(intervalTime))
 	}
 }
 

@@ -7,8 +7,20 @@ services:
       context: ./
       dockerfile: dockerfiles/dockerfile
       network: host
-  russia:
+  eksrussia:
     image: registry.russia.vsmart00.com/glara
+    build:
+      context: ./
+      dockerfile: dockerfiles/dockerfile
+      network: host
+  eksegypt:
+    image: registry.egypt.vsmart00.com/glara
+    build:
+      context: ./
+      dockerfile: dockerfiles/dockerfile
+      network: host
+  global:
+    image: registry.global.dentalclever.com/glara
     build:
       context: ./
       dockerfile: dockerfiles/dockerfile

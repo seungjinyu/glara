@@ -3,6 +3,7 @@ package settings
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -18,13 +19,14 @@ import (
 
 func ClientSetting(cli *ClientSetInstance, kubeEnv string) {
 	KUBE_ENV := kubeEnv
+	fmt.Println("KUBE ENV is : [", KUBE_ENV, "]")
 	if KUBE_ENV == "OUT" {
-		fmt.Println(KUBE_ENV)
+
 		err := cli.CreateOutClientSet()
 		errorHandler.ConfigError(err)
 
 	} else {
-		fmt.Println(KUBE_ENV)
+
 		err := cli.CreateInClientSet()
 		errorHandler.ConfigError(err)
 	}
@@ -38,7 +40,7 @@ func (c *ClientSetInstance) CreateInClientSet() error {
 	// config, err := rest.InClusterConfig()
 
 	// if err != nil {
-	// 	panic(err.Error())
+	// 	log.Println(err.Error())
 	// }
 
 	const (
@@ -65,7 +67,7 @@ func (c *ClientSetInstance) CreateInClientSet() error {
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		log.Println(err.Error())
 	}
 	c.Clientset = clientset
 
@@ -86,14 +88,14 @@ func (c *ClientSetInstance) CreateOutClientSet() error {
 
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
 	if err != nil {
-		panic(err.Error())
+		log.Println(err.Error())
 	}
 
 	// fmt.Println(config)
 	clientset, err := kubernetes.NewForConfig(config)
 
 	if err != nil {
-		panic(err.Error())
+		log.Println(err.Error())
 	}
 	c.Clientset = clientset
 	return err

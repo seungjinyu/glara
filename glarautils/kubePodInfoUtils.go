@@ -3,9 +3,9 @@ package glarautils
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"log"
-	"strings"
 
 	"github.com/seungjinyu/glara/models"
 	v1 "k8s.io/api/core/v1"
@@ -13,31 +13,43 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// var defaultNamespace = "default"
-// var defaultPodname = "coredns"
+// GetglaraPodListInfo gets the information from the podlist and extract the datas and returns GlaraPodInfoList
+func GetglaraPodListInfo(clientset *kubernetes.Clientset, namespace string) *models.GlaraPodInfoList {
+
+	podlist, err := K8sPodList(clientset, namespace)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	result := extractDataFromPodList(podlist, clientset)
+
+	return result
+}
 
 // ExtracDataFromPodList extracts data from the pod list
-func extractDataFromPodList(pl []v1.Pod, clientset *kubernetes.Clientset) models.GlaraPodInfoList {
+func extractDataFromPodList(pl *[]v1.Pod, clientset *kubernetes.Clientset) *models.GlaraPodInfoList {
 
 	var tmp models.GlaraPodInfoList
 	repl := pl
-	tmp.InfoList = make([]models.GlaraPodInfo, len(repl))
+	tmp.InfoList = make([]models.GlaraPodInfo, len(*repl))
 
 	// fmt.Println(len(repl))
-	for i, value := range repl {
-		tmp.InfoList[i] = extractDataFromPod(value, clientset)
+	for i, value := range *repl {
+
+		tmp.InfoList[i] = *extractDataFromPod(&value, clientset)
 	}
-	return tmp
+	return &tmp
 }
 
 // ExtracDataFromPod extracts data from the pod
-func extractDataFromPod(pd v1.Pod, clientset *kubernetes.Clientset) models.GlaraPodInfo {
+func extractDataFromPod(pd *v1.Pod, clientset *kubernetes.Clientset) *models.GlaraPodInfo {
 	// fmt.Println(pd)
 	podLog, err := getPodLogs(pd, clientset)
 	if err != nil {
 		log.Println(err)
 	}
-	tmp := models.GlaraPodInfo{
+	tmp := &models.GlaraPodInfo{
 		PodName: pd.GetName(),
 		// PodLogs: pd.GetPod(),
 		PodLog: podLog,
@@ -50,70 +62,51 @@ func extractDataFromPod(pd v1.Pod, clientset *kubernetes.Clientset) models.Glara
 	return tmp
 }
 
-// GetglaraPodListInfo gets the information from the podlist and extract the datas and returns GlaraPodInfoList
-func GetglaraPodListInfo(clientset *kubernetes.Clientset, namespace string) models.GlaraPodInfoList {
-
-	podlist := K8sPodList(clientset, namespace)
-	if podlist == nil {
-		log.Println("The Request returned ZERO pod")
-	}
-	result := extractDataFromPodList(podlist, clientset)
-
-	return result
-}
-
-// GetGlaraPodInfo gets the information from the pod and extract the datas and returns GlaraPodInfo
-func GetGlaraPodInfo(clientset *kubernetes.Clientset, namespace, requestPodName string) models.GlaraPodInfo {
-
-	GlaraPodInfo, err := K8sPod(clientset, namespace, requestPodName)
-	if err != nil {
-		panic(err)
-	}
-	result := extractDataFromPod(GlaraPodInfo, clientset)
-
-	return result
-}
-
 // K8sPodList K8ss backs the pod instance List of the cluster by the kubernetes config file
-func K8sPodList(clientset *kubernetes.Clientset, namespace string) []v1.Pod {
+func K8sPodList(clientset *kubernetes.Clientset, namespace string) (*[]v1.Pod, error) {
 
 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+
 	if err != nil {
-		panic(err.Error())
+		// log.Println(err.Error())
+		return nil, err
 	}
+
 	if len(pods.Items) == 0 {
-		log.Printf("There are no pod from the request please try an another option and run the agent again")
-		return nil
+		return nil, errors.New("there is no pod for the requested option")
 	}
 	// fmt.Printf("There are %d pods \n", len(pods.Items))
-	items := pods.Items
+	items := &pods.Items
 	// result := model.GlaraPodInfo{}
-	return items
-
+	return items, nil
 }
 
-// K8sPod K8ss backs the pod instance of the cluster by the kubernetes config file
-func K8sPod(clientset *kubernetes.Clientset, namespace, requestPodName string) (v1.Pod, error) {
+// getPodLogs Here is what we came up with,, eventually using client-go library:
+func getPodLogs(pod *v1.Pod, clientset *kubernetes.Clientset) (string, error) {
 
-	// if namespace == "" {
-	// 	namespace = defaultNamespace
-	// }
-	// if requestPodName == "" {
-	// 	requestPodName = defaultPodname
-	// }
+	podLogOpts := v1.PodLogOptions{}
+	nsPodsData := clientset.CoreV1().Pods(pod.Namespace)
 
-	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+	// fmt.Println(nsPodsData)
+	req := nsPodsData.GetLogs(pod.Name, &podLogOpts)
+
+	podLogs, err := req.Stream(context.TODO())
+
 	if err != nil {
-		panic(err)
+		return "error in opening stream", err
 	}
 
-	for _, v := range pods.Items {
-		if strings.Contains(v.Name, requestPodName) {
-			return v, nil
-		}
+	defer podLogs.Close()
+
+	buf := new(bytes.Buffer)
+
+	_, err = io.Copy(buf, podLogs)
+
+	if err != nil {
+		return "error in copy information from podLogs to buf", err
 	}
 
-	return v1.Pod{}, err
+	return buf.String(), nil
 }
 
 // // SaveGlaraPodInfoList saves the logs into a multiple *.log file
@@ -149,30 +142,33 @@ func K8sPod(clientset *kubernetes.Clientset, namespace, requestPodName string) (
 
 // }
 
-// getPodLogs Here is what we came up with,, eventually using client-go library:
-func getPodLogs(pod v1.Pod, clientset *kubernetes.Clientset) (string, error) {
+// // GetGlaraPodInfo gets the information from the pod and extract the datas and returns GlaraPodInfo
+// func GetGlaraPodInfo(clientset *kubernetes.Clientset, namespace, requestPodName string) models.GlaraPodInfo {
 
-	podLogOpts := v1.PodLogOptions{}
-	nsPodsData := clientset.CoreV1().Pods(pod.Namespace)
+// 	GlaraPodInfo, err := K8sPod(clientset, namespace, requestPodName)
+// 	if err != nil {
+// 		log.Println(err)
+// 	}
+// 	result := extractDataFromPod(GlaraPodInfo, clientset)
 
-	// fmt.Println(nsPodsData)
-	req := nsPodsData.GetLogs(pod.Name, &podLogOpts)
+// 	return result
+// }
 
-	podLogs, err := req.Stream(context.TODO())
+// K8sPod K8s the pod instance of the cluster by the kubernetes config file
+// func K8sPod(clientset *kubernetes.Clientset, namespace, requestPodName string) (*v1.Pod, error) {
 
-	if err != nil {
-		return "error in opening stream", err
-	}
+// 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
+// 	if err != nil {
+// 		// log.Println(err)
+// 		return nil, err
+// 	}
 
-	defer podLogs.Close()
+// 	for _, v := range pods.Items {
+// 		if strings.Contains(v.Name, requestPodName) {
+// 			return &v, nil
+// 		}
+// 	}
 
-	buf := new(bytes.Buffer)
-
-	_, err = io.Copy(buf, podLogs)
-
-	if err != nil {
-		return "error in copy information from podLogs to buf", err
-	}
-
-	return buf.String(), nil
-}
+// 	err = errors.New("there is no pod for the requested pod")
+// 	return nil, err
+// }

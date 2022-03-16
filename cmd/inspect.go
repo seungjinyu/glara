@@ -5,6 +5,7 @@ Copyright © 2022 NAME HERE seungjinyu93@gmail.com
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/seungjinyu/glara/glarautils"
@@ -46,9 +47,9 @@ var inspectCmd = &cobra.Command{
 		rStr := os.Getenv("RESTARTLOG")
 
 		var kubecli settings.ClientSetInstance
-
+		fmt.Println("Client setting is now initialized")
 		settings.ClientSetting(&kubecli, KUBE_ENV)
-
+		fmt.Println("Client setting completed")
 		glarautils.InspectPod(namespace, pod, rStr, kubecli)
 
 	},
