@@ -98,7 +98,13 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 				}
 
 			}
-
+			payload := Payload{
+				Text:      "Glara deleted " + strconv.Itoa(len(tmpPodList)) + " pods in " + namespace,
+				Username:  "Glara-" + os.Getenv("CLUSTER_NAME"),
+				IconEmoji: ":high_brightness:",
+			}
+			url := os.Getenv("SLACK_URL")
+			payload.SendSlack(url)
 		} else {
 			log.Println("There is no pod that matches the condition")
 		}

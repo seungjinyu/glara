@@ -72,8 +72,7 @@ func (payload *Payload) AddAttachment(attachment Attachment) *Payload {
 	return payload
 }
 
-//slack api???
-
+// SendSlack sends the message
 func (payload *Payload) SendSlack(url string) {
 	client := &http.Client{}
 	b, err := json.Marshal(payload)

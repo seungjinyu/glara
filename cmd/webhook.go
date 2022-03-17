@@ -1,11 +1,11 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2022 NAME HERE seungjinyu93@gmail.com
 */
 package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/seungjinyu/glara/glarautils"
 	"github.com/spf13/cobra"
@@ -26,23 +26,13 @@ to quickly create a Cobra application.`,
 		payload := glarautils.Payload{
 			Text:      "Webhook Check",
 			Username:  "Glara",
-			IconEmoji: ":dolphin:",
+			IconEmoji: ":high_brightness:",
 		}
-		url := "test"
+		url := os.Getenv("SLACK_URL")
 		payload.SendSlack(url)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(webhookCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// webhookCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// webhookCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
