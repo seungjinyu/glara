@@ -109,7 +109,7 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 			log.Println("There is no pod that matches the condition")
 		}
 
-		intervalTime, err := strconv.Atoi(os.Getenv("INTERVAL_TIME"))
+		intervalTime, err := strconv.Atoi(fmt.Sprintf("%s", os.Getenv("INTERVAL_TIME")))
 		if err != nil {
 			log.Println(err)
 		}
