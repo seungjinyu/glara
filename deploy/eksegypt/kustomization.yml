@@ -1,7 +1,0 @@
-bases:
-  - "../base"
-
-images:
-  - name: glara
-    newName: registry.egypt.vsmart00.com/glara
-    newTag: latest

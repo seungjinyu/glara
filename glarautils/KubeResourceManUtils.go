@@ -98,6 +98,7 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 				}
 
 			}
+
 		} else {
 			log.Println("There is no pod that matches the condition")
 		}

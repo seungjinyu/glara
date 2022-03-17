@@ -1,6 +1,0 @@
-namespace: glara
-
-resources:
-  - "glara.yml"
-  - "glara-rbac.yml"
-  - "glara-namespace.yml"
