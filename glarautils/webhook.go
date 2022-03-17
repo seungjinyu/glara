@@ -76,7 +76,13 @@ func (payload *Payload) AddAttachment(attachment Attachment) *Payload {
 func (payload *Payload) SendSlack(url string) {
 	client := &http.Client{}
 	b, err := json.Marshal(payload)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
+	if err != nil {
+		log.Fatalln(err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
