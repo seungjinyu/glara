@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 	"io"
-	"log"
 
+	"github.com/seungjinyu/glara/errorHandler"
 	"github.com/seungjinyu/glara/models"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,9 +18,7 @@ func GetGlaraPodListInfo(clientset *kubernetes.Clientset, namespace string) (*mo
 
 	podlist, err := K8sPodList(clientset, namespace)
 
-	if err != nil {
-		log.Println(err)
-	}
+	errorHandler.PrintError(err)
 
 	result := extractDataFromPodList(podlist, clientset)
 	if result != nil {
@@ -51,9 +49,7 @@ func extractDataFromPod(pd *v1.Pod, clientset *kubernetes.Clientset) *models.Gla
 
 	podLog, err := getPodLogs(pd, clientset)
 
-	if err != nil {
-		log.Println(err)
-	}
+	errorHandler.PrintError(err)
 
 	if pd.OwnerReferences != nil {
 		tmp := &models.GlaraPodInfo{
@@ -83,11 +79,12 @@ func K8sPodList(clientset *kubernetes.Clientset, namespace string) (*[]v1.Pod, e
 	}
 
 	// check if there are items in the list
-	if len(pods.Items) == 0 {
-		return nil, errors.New("there is no pod for the requested option")
+	if len(pods.Items) != 0 {
+		return &pods.Items, nil
+
 	}
 
-	return &pods.Items, nil
+	return nil, errors.New("there is no pod for the requested option")
 }
 
 // getPodLogs Here is what we came up with,, eventually using client-go library:
@@ -100,15 +97,14 @@ func getPodLogs(pod *v1.Pod, clientset *kubernetes.Clientset) (string, error) {
 	if nsPodsData != nil {
 		req := nsPodsData.GetLogs(pod.Name, &podLogOpts)
 		podLogs, err := req.Stream(context.TODO())
-		if err != nil {
-			return "error in opening stream", err
-		}
+
+		errorHandler.PrintError(err)
+
 		defer podLogs.Close()
 		_, err = io.Copy(buf, podLogs)
 
-		if err != nil {
-			return "error in copy information from podLogs to buf", err
-		}
+		errorHandler.PrintError(err)
+
 		return buf.String(), nil
 	}
 	return buf.String(), errors.New("there are no pods in that namespace")

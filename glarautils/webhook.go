@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/seungjinyu/glara/errorHandler"
 )
 
 type Field struct {
@@ -76,25 +78,19 @@ func (payload *Payload) AddAttachment(attachment Attachment) *Payload {
 func (payload *Payload) SendSlack(url string) {
 	client := &http.Client{}
 	b, err := json.Marshal(payload)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	req.Header.Set("Content-Type", "application/json")
+	errorHandler.PrintError(err)
 
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
+	errorHandler.PrintError(err)
+
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	errorHandler.PrintError(err)
+
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	errorHandler.PrintError(err)
 
 	data := string(body)
 

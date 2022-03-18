@@ -3,7 +3,6 @@ package settings
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -23,12 +22,12 @@ func ClientSetting(cli *ClientSetInstance, kubeEnv string) {
 	if KUBE_ENV == "OUT" {
 
 		err := cli.CreateOutClientSet()
-		errorHandler.ConfigError(err)
+		errorHandler.PrintError(err)
 
 	} else {
 
 		err := cli.CreateInClientSet()
-		errorHandler.ConfigError(err)
+		errorHandler.PrintError(err)
 	}
 }
 
@@ -66,9 +65,7 @@ func (c *ClientSetInstance) CreateInClientSet() error {
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Println(err.Error())
-	}
+	errorHandler.PrintError(err)
 	c.Clientset = clientset
 
 	return err
@@ -87,16 +84,12 @@ func (c *ClientSetInstance) CreateOutClientSet() error {
 	// fmt.Println("kubeconfig path:", *kubeconfig)
 
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
-	if err != nil {
-		log.Println(err.Error())
-	}
+	errorHandler.PrintError(err)
 
 	// fmt.Println(config)
 	clientset, err := kubernetes.NewForConfig(config)
 
-	if err != nil {
-		log.Println(err.Error())
-	}
+	errorHandler.PrintError(err)
 	c.Clientset = clientset
 	return err
 }

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/seungjinyu/glara/errorHandler"
 	"github.com/seungjinyu/glara/models"
 	"github.com/seungjinyu/glara/settings"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -85,21 +86,15 @@ func checkAndDelete(rs *models.GlaraPodInfoStack, namespace, pod, rStr string, k
 
 		case "StatefulSet":
 			err := DeleteStatefulSetPod(namespace, tmp.PodName, kubecli.Clientset)
-			if err != nil {
-				log.Println(err)
-			}
+			errorHandler.PrintError(err)
 
 		case "ReplicaSet":
 			err := DeleteReplicaSetPod(namespace, tmp.PodName, kubecli.Clientset)
-			if err != nil {
-				log.Println(err)
-			}
+			errorHandler.PrintError(err)
 
 		case "DaemonSet":
 			err := DeleteDaemonSetPod(namespace, tmp.PodName, kubecli.Clientset)
-			if err != nil {
-				log.Println(err)
-			}
+			errorHandler.PrintError(err)
 
 		}
 		checkAndDelete(rs, namespace, pod, rStr, kubecli)
@@ -120,9 +115,9 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 			kubecli.Clientset,
 			namespace,
 		)
-		if err != nil {
-			log.Println(err)
-		}
+
+		errorHandler.PrintError(err)
+
 		if totalPodStack != nil {
 			resultStack = checkStack(totalPodStack, resultStack, pod, rStr)
 			log.Println("The stack is checked")
