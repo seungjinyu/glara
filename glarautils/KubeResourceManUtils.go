@@ -48,6 +48,8 @@ func DeleteReplicaSetPod(namespace, ReplicaSetPodName string, clientset *kuberne
 
 	return err
 }
+
+// checkStack is used to check the elements in the stack and push them to an anothor stack
 func checkStack(gs *models.GlaraPodInfoStack, rs *models.GlaraPodInfoStack, pod, rStr string) *models.GlaraPodInfoStack {
 
 	if !gs.IsEmpty() {
@@ -61,7 +63,7 @@ func checkStack(gs *models.GlaraPodInfoStack, rs *models.GlaraPodInfoStack, pod,
 				log.Println(tmp.PodName, " does not contains that log")
 			}
 		} else {
-			log.Println("Pod name is not included")
+			log.Println(tmp.PodName, "Pod name is not included")
 		}
 		checkStack(gs, rs, pod, rStr)
 	}
@@ -70,7 +72,7 @@ func checkStack(gs *models.GlaraPodInfoStack, rs *models.GlaraPodInfoStack, pod,
 
 }
 
-func inspectOwnerReferenceStack(rs *models.GlaraPodInfoStack, namespace, pod, rStr string, kubecli settings.ClientSetInstance) {
+func checkAndDelete(rs *models.GlaraPodInfoStack, namespace, pod, rStr string, kubecli settings.ClientSetInstance) {
 	if !rs.IsEmpty() {
 		tmp := rs.Pop()
 
@@ -100,7 +102,7 @@ func inspectOwnerReferenceStack(rs *models.GlaraPodInfoStack, namespace, pod, rS
 			}
 
 		}
-		inspectOwnerReferenceStack(rs, namespace, pod, rStr, kubecli)
+		checkAndDelete(rs, namespace, pod, rStr, kubecli)
 
 	} else {
 		log.Println("The stack is inspected")
@@ -114,21 +116,32 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 		resultStack := models.NewGlaraPodInfoStack()
 
 		fmt.Println("Inspect called namespace:", namespace, " pod: ", pod, " rStr: ", rStr)
-		totalPodStack := GetglaraPodListInfo(
+		totalPodStack, err := GetglaraPodListInfo(
 			kubecli.Clientset,
 			namespace,
 		)
+		if err != nil {
+			log.Println(err)
+		}
 		if totalPodStack != nil {
 			resultStack = checkStack(totalPodStack, resultStack, pod, rStr)
 			log.Println("The stack is checked")
 			if resultStack != nil {
 				fmt.Println("Checking")
 				TOTALPODSTOCHECK := strconv.Itoa(len(*resultStack))
-				inspectOwnerReferenceStack(resultStack, namespace, pod, rStr, kubecli)
+				checkAndDelete(resultStack, namespace, pod, rStr, kubecli)
 				payload := Payload{
-					Text:      "Glara deleted " + TOTALPODSTOCHECK + " pods in " + namespace,
-					Username:  "Glara-" + os.Getenv("CLUSTER_NAME"),
-					IconEmoji: ":high_brightness:",
+					Parse:       "",
+					Username:    "Glara-" + os.Getenv("CLUSTER_NAME"),
+					IconUrl:     "",
+					IconEmoji:   ":high_brightness:",
+					Channel:     "",
+					Text:        "Glara deleted " + TOTALPODSTOCHECK + " pods in " + namespace,
+					LinkNames:   "",
+					Attachments: []Attachment{},
+					UnfurlLinks: false,
+					UnfurlMedia: false,
+					Markdown:    false,
 				}
 				url := os.Getenv("SLACK_URL")
 				payload.SendSlack(url)
