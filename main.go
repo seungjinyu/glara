@@ -6,6 +6,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/seungjinyu/glara/cmd"
@@ -13,10 +14,16 @@ import (
 
 func main() {
 
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env")
+	args := os.Args
+	if len(args) < 3 {
+		cmd.Execute()
+	} else {
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatal("Error loading .env")
+		}
+
+		cmd.Execute()
 	}
 
-	cmd.Execute()
 }
