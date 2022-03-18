@@ -1,6 +1,5 @@
 /*
 Copyright © 2022 NAME HERE seungjinyu93@gmail.com
-
 */
 package main
 
@@ -22,7 +21,6 @@ func main() {
 		if err != nil {
 			log.Fatal("Error loading .env")
 		}
-
 		cmd.Execute()
 	}
 
