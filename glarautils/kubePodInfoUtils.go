@@ -13,8 +13,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// GetglaraPodListInfo gets the information from the podlist and extract the datas and returns GlaraPodInfoList
-func GetglaraPodListInfo(clientset *kubernetes.Clientset, namespace string) (*models.GlaraPodInfoStack, error) {
+// GetGlaraPodListInfo gets the information from the podlist and extract the datas and returns GlaraPodInfoList
+func GetGlaraPodListInfo(clientset *kubernetes.Clientset, namespace string) (*models.GlaraPodInfoStack, error) {
 
 	podlist, err := K8sPodList(clientset, namespace)
 

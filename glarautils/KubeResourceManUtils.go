@@ -116,7 +116,7 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 		resultStack := models.NewGlaraPodInfoStack()
 
 		fmt.Println("Inspect called namespace:", namespace, " pod: ", pod, " rStr: ", rStr)
-		totalPodStack, err := GetglaraPodListInfo(
+		totalPodStack, err := GetGlaraPodListInfo(
 			kubecli.Clientset,
 			namespace,
 		)
@@ -158,4 +158,10 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 
 		time.Sleep(time.Second * time.Duration(intervalTime))
 	}
+}
+
+func DeleteCompletedTask(namespace, pod, rStr string, kubecli settings.ClientSetInstance) error {
+
+	return nil
+
 }
