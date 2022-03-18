@@ -48,65 +48,96 @@ func DeleteReplicaSetPod(namespace, ReplicaSetPodName string, clientset *kuberne
 
 	return err
 }
+func checkStack(gs *models.GlaraPodInfoStack, rs *models.GlaraPodInfoStack, pod, rStr string) *models.GlaraPodInfoStack {
+
+	if !gs.IsEmpty() {
+		tmp := gs.Pop()
+		log.Println("trying to push ", tmp.PodName, " ", tmp.OwnerReference)
+		if strings.Contains(tmp.PodName, pod) {
+			if strings.Contains(tmp.PodLog, rStr) {
+				fmt.Println("Pushing a new element")
+				rs.Push(tmp)
+			} else {
+				log.Println(tmp.PodName, " does not contains that log")
+			}
+		} else {
+			log.Println("Pod name is not included")
+		}
+		checkStack(gs, rs, pod, rStr)
+	}
+
+	return rs
+
+}
+
+func inspectOwnerReferenceStack(rs *models.GlaraPodInfoStack, namespace, pod, rStr string, kubecli settings.ClientSetInstance) {
+	if !rs.IsEmpty() {
+		tmp := rs.Pop()
+
+		inspectResult := strings.Contains(tmp.PodLog, rStr)
+		log.Printf("|%7s|%50s|%10s|%5s|%4s|%12s|\n",
+			"PODNAME", tmp.PodName,
+			"LOG CONTAIN", strconv.FormatBool(inspectResult),
+			"TYPE", tmp.OwnerReference)
+		switch tmp.OwnerReference {
+
+		case "StatefulSet":
+			err := DeleteStatefulSetPod(namespace, tmp.PodName, kubecli.Clientset)
+			if err != nil {
+				log.Println(err)
+			}
+
+		case "ReplicaSet":
+			err := DeleteReplicaSetPod(namespace, tmp.PodName, kubecli.Clientset)
+			if err != nil {
+				log.Println(err)
+			}
+
+		case "DaemonSet":
+			err := DeleteDaemonSetPod(namespace, tmp.PodName, kubecli.Clientset)
+			if err != nil {
+				log.Println(err)
+			}
+
+		}
+		inspectOwnerReferenceStack(rs, namespace, pod, rStr, kubecli)
+
+	} else {
+		log.Println("The stack is inspected")
+	}
+}
 
 // InspectPod inspects the pods and returns an error if there is no pod.
 func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance) error {
 
 	for {
-		var tmpPodList []models.GlaraPodInfo
+		resultStack := models.NewGlaraPodInfoStack()
+
 		fmt.Println("Inspect called namespace:", namespace, " pod: ", pod, " rStr: ", rStr)
-		datas := GetglaraPodListInfo(
+		totalPodStack := GetglaraPodListInfo(
 			kubecli.Clientset,
 			namespace,
 		)
 
-		for _, v := range datas.InfoList {
-			if strings.Contains(v.PodName, pod) {
-				if strings.Contains(v.PodLog, rStr) {
-					tmpPodList = append(tmpPodList, v)
+		if totalPodStack != nil {
+
+			resultStack = checkStack(totalPodStack, resultStack, pod, rStr)
+			log.Println("The stack is checked")
+			if resultStack != nil {
+				fmt.Println("Checking")
+				TOTALPODSTOCHECK := strconv.Itoa(len(*resultStack))
+				inspectOwnerReferenceStack(resultStack, namespace, pod, rStr, kubecli)
+				payload := Payload{
+					Text:      "Glara deleted " + TOTALPODSTOCHECK + " pods in " + namespace,
+					Username:  "Glara-" + os.Getenv("CLUSTER_NAME"),
+					IconEmoji: ":high_brightness:",
 				}
+				url := os.Getenv("SLACK_URL")
+				payload.SendSlack(url)
+			} else {
+				fmt.Println("Stack is empty")
 			}
-		}
 
-		for _, v := range tmpPodList {
-			fmt.Println(v.PodName)
-		}
-		if len(tmpPodList) != 0 {
-			for _, v := range tmpPodList {
-				inspectResult := strings.Contains(v.PodLog, rStr)
-				log.Printf("|%7s|%50s|%10s|%5s|%4s|%12s|\n",
-					"PODNAME", v.PodName,
-					"LOG CONTAIN", strconv.FormatBool(inspectResult),
-					"TYPE", v.OwnerReference)
-				switch v.OwnerReference {
-
-				case "StatefulSet":
-					err := DeleteStatefulSetPod(namespace, v.PodName, kubecli.Clientset)
-					if err != nil {
-						log.Println(err)
-					}
-				case "ReplicaSet":
-					err := DeleteReplicaSetPod(namespace, v.PodName, kubecli.Clientset)
-					if err != nil {
-						log.Println(err)
-					}
-				case "DaemonSet":
-					err := DeleteDaemonSetPod(namespace, v.PodName, kubecli.Clientset)
-					if err != nil {
-						log.Println(err)
-					}
-				}
-
-			}
-			payload := Payload{
-				Text:      "Glara deleted " + strconv.Itoa(len(tmpPodList)) + " pods in " + namespace,
-				Username:  "Glara-" + os.Getenv("CLUSTER_NAME"),
-				IconEmoji: ":high_brightness:",
-			}
-			url := os.Getenv("SLACK_URL")
-			payload.SendSlack(url)
-		} else {
-			log.Println("There is no pod that matches the condition")
 		}
 
 		intervalTime, err := strconv.Atoi(fmt.Sprintf("%s", os.Getenv("INTERVAL_TIME")))
@@ -117,8 +148,3 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 		time.Sleep(time.Second * time.Duration(intervalTime))
 	}
 }
-
-// func InspectLog(PodLog, rStr string) bool {
-// 	result := strings.Contains(PodLog, rStr)
-// 	return result
-// }

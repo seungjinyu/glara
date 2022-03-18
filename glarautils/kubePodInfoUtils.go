@@ -14,7 +14,7 @@ import (
 )
 
 // GetglaraPodListInfo gets the information from the podlist and extract the datas and returns GlaraPodInfoList
-func GetglaraPodListInfo(clientset *kubernetes.Clientset, namespace string) *models.GlaraPodInfoList {
+func GetglaraPodListInfo(clientset *kubernetes.Clientset, namespace string) *models.GlaraPodInfoStack {
 
 	podlist, err := K8sPodList(clientset, namespace)
 
@@ -28,37 +28,57 @@ func GetglaraPodListInfo(clientset *kubernetes.Clientset, namespace string) *mod
 }
 
 // ExtracDataFromPodList extracts data from the pod list
-func extractDataFromPodList(pl *[]v1.Pod, clientset *kubernetes.Clientset) *models.GlaraPodInfoList {
+func extractDataFromPodList(pl *[]v1.Pod, clientset *kubernetes.Clientset) *models.GlaraPodInfoStack {
 
-	var tmp models.GlaraPodInfoList
-	repl := pl
-	tmp.InfoList = make([]models.GlaraPodInfo, len(*repl))
+	// var tmp models.GlaraPodInfoList
+	// tmp.InfoList = make([]models.GlaraPodInfo, len(*repl))
 
 	// fmt.Println(len(repl))
-	for i, value := range *repl {
+	// for i, value := range *repl {
+	// 	tmp.InfoList[i] = *extractDataFromPod(&value, clientset)
+	// }
 
-		tmp.InfoList[i] = *extractDataFromPod(&value, clientset)
+	tmpStack := models.NewGlaraPodInfoStack()
+
+	if pl != nil {
+		for _, value := range *pl {
+			tmpStack.Push(*extractDataFromPod(&value, clientset))
+		}
+		return tmpStack
 	}
-	return &tmp
+	return nil
+
 }
 
 // ExtracDataFromPod extracts data from the pod
 func extractDataFromPod(pd *v1.Pod, clientset *kubernetes.Clientset) *models.GlaraPodInfo {
 	// fmt.Println(pd)
+
+	// if podlist == nil {
+	// 	return nil
+	// }
 	podLog, err := getPodLogs(pd, clientset)
 	if err != nil {
 		log.Println(err)
+	}
+	if pd.OwnerReferences != nil {
+		tmp := &models.GlaraPodInfo{
+			PodName: pd.GetName(),
+			// PodLogs: pd.GetPod(),
+			PodLog: podLog,
+			// OwnerReference: pd.ObjectMeta.GetOwnerReferences()[0].Kind,
+
+			OwnerReference: pd.OwnerReferences[0].Kind,
+		}
+		return tmp
 	}
 	tmp := &models.GlaraPodInfo{
 		PodName: pd.GetName(),
 		// PodLogs: pd.GetPod(),
 		PodLog: podLog,
 		// OwnerReference: pd.ObjectMeta.GetOwnerReferences()[0].Kind,
-		OwnerReference: pd.OwnerReferences[0].Kind,
-	}
 
-	// fmt.Println(tmp.OwnerReference[0])
-	// fmt.Println(tmp.PodLog, tmp.PodName)
+	}
 	return tmp
 }
 
@@ -68,16 +88,15 @@ func K8sPodList(clientset *kubernetes.Clientset, namespace string) (*[]v1.Pod, e
 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 
 	if err != nil {
-		// log.Println(err.Error())
 		return nil, err
 	}
 
 	if len(pods.Items) == 0 {
 		return nil, errors.New("there is no pod for the requested option")
 	}
-	// fmt.Printf("There are %d pods \n", len(pods.Items))
+
 	items := &pods.Items
-	// result := model.GlaraPodInfo{}
+
 	return items, nil
 }
 
