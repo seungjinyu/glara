@@ -118,9 +118,7 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 			kubecli.Clientset,
 			namespace,
 		)
-
 		if totalPodStack != nil {
-
 			resultStack = checkStack(totalPodStack, resultStack, pod, rStr)
 			log.Println("The stack is checked")
 			if resultStack != nil {
