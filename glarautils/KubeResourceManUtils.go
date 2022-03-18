@@ -16,34 +16,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// DeleteStatefulSetPod restarts the stateful set
-func DeleteStatefulSetPod(namespace, StatefulSetPodName string, clientset *kubernetes.Clientset) error {
-	err := clientset.CoreV1().Pods(namespace).Delete(
-		context.TODO(),
-		StatefulSetPodName,
-		metav1.DeleteOptions{},
-	)
-
-	return err
-}
-
-func DeleteDaemonSetPod(namespace, DaemonSetPodName string, clientset *kubernetes.Clientset) error {
+func DeletePodInKube(namespace, PodName string, clientset *kubernetes.Clientset) error {
 
 	err := clientset.CoreV1().Pods(namespace).Delete(
 		context.TODO(),
-		DaemonSetPodName,
-		metav1.DeleteOptions{},
-	)
-	return err
-
-}
-
-// RestartStatefulSet restarts the replicaset
-func DeleteReplicaSetPod(namespace, ReplicaSetPodName string, clientset *kubernetes.Clientset) error {
-
-	err := clientset.CoreV1().Pods(namespace).Delete(
-		context.TODO(),
-		ReplicaSetPodName,
+		PodName,
 		metav1.DeleteOptions{},
 	)
 
@@ -55,10 +32,8 @@ func checkStack(gs *models.GlaraPodInfoStack, rs *models.GlaraPodInfoStack, pod,
 
 	if !gs.IsEmpty() {
 		tmp := gs.Pop()
-		log.Println("trying to push ", tmp.PodName, " ", tmp.OwnerReference)
 		if strings.Contains(tmp.PodName, pod) {
 			if strings.Contains(tmp.PodLog, rStr) {
-				fmt.Println("Pushing a new element")
 				rs.Push(tmp)
 			} else {
 				log.Println(tmp.PodName, " does not contains that log")
@@ -73,31 +48,18 @@ func checkStack(gs *models.GlaraPodInfoStack, rs *models.GlaraPodInfoStack, pod,
 
 }
 
-func checkAndDelete(rs *models.GlaraPodInfoStack, namespace, pod, rStr string, kubecli settings.ClientSetInstance) {
+func deletePodProcess(rs *models.GlaraPodInfoStack, namespace, pod, rStr string, kubecli settings.ClientSetInstance) {
 	if !rs.IsEmpty() {
 		tmp := rs.Pop()
 
-		inspectResult := strings.Contains(tmp.PodLog, rStr)
-		log.Printf("|%7s|%50s|%10s|%5s|%4s|%12s|\n",
+		log.Printf("|%7s|%50s|%4s|%12s|\n",
 			"PODNAME", tmp.PodName,
-			"LOG CONTAIN", strconv.FormatBool(inspectResult),
-			"TYPE", tmp.OwnerReference)
-		switch tmp.OwnerReference {
+			"TYPE", tmp.OwnerReference,
+		)
 
-		case "StatefulSet":
-			err := DeleteStatefulSetPod(namespace, tmp.PodName, kubecli.Clientset)
-			errorHandler.PrintError(err)
-
-		case "ReplicaSet":
-			err := DeleteReplicaSetPod(namespace, tmp.PodName, kubecli.Clientset)
-			errorHandler.PrintError(err)
-
-		case "DaemonSet":
-			err := DeleteDaemonSetPod(namespace, tmp.PodName, kubecli.Clientset)
-			errorHandler.PrintError(err)
-
-		}
-		checkAndDelete(rs, namespace, pod, rStr, kubecli)
+		err := DeletePodInKube(namespace, tmp.PodName, kubecli.Clientset)
+		errorHandler.PrintError(err)
+		deletePodProcess(rs, namespace, pod, rStr, kubecli)
 
 	} else {
 		log.Println("The stack is inspected")
@@ -122,15 +84,15 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 			resultStack = checkStack(totalPodStack, resultStack, pod, rStr)
 			log.Println("The stack is checked")
 			if resultStack != nil {
-				fmt.Println("Checking")
+				log.Println("Checking")
 				TOTALPODSTOCHECK := strconv.Itoa(len(*resultStack))
-				checkAndDelete(resultStack, namespace, pod, rStr, kubecli)
+				deletePodProcess(resultStack, namespace, pod, rStr, kubecli)
 				if TOTALPODSTOCHECK != "0" {
 					SendmsgToSlack(TOTALPODSTOCHECK, namespace)
 				}
 
 			} else {
-				fmt.Println("Stack is empty")
+				log.Println("Stack is empty")
 			}
 
 		}
@@ -139,7 +101,6 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 		if err != nil {
 			log.Println(err)
 		}
-
 		time.Sleep(time.Second * time.Duration(intervalTime))
 	}
 }
