@@ -125,21 +125,10 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 				fmt.Println("Checking")
 				TOTALPODSTOCHECK := strconv.Itoa(len(*resultStack))
 				checkAndDelete(resultStack, namespace, pod, rStr, kubecli)
-				payload := Payload{
-					Parse:       "",
-					Username:    "Glara-" + os.Getenv("CLUSTER_NAME"),
-					IconUrl:     "",
-					IconEmoji:   ":high_brightness:",
-					Channel:     "",
-					Text:        "Glara deleted " + TOTALPODSTOCHECK + " pods in " + namespace,
-					LinkNames:   "",
-					Attachments: []Attachment{},
-					UnfurlLinks: false,
-					UnfurlMedia: false,
-					Markdown:    false,
+				if TOTALPODSTOCHECK != "0" {
+					SendmsgToSlack(TOTALPODSTOCHECK, namespace)
 				}
-				url := os.Getenv("SLACK_URL")
-				payload.SendSlack(url)
+
 			} else {
 				fmt.Println("Stack is empty")
 			}
@@ -153,6 +142,24 @@ func InspectPod(namespace, pod, rStr string, kubecli settings.ClientSetInstance)
 
 		time.Sleep(time.Second * time.Duration(intervalTime))
 	}
+}
+
+func SendmsgToSlack(TOTALPODSTOCHECK, namespace string) {
+	payload := Payload{
+		Parse:       "",
+		Username:    "Glara-" + os.Getenv("CLUSTER_NAME"),
+		IconUrl:     "",
+		IconEmoji:   ":high_brightness:",
+		Channel:     "",
+		Text:        "Glara deleted " + TOTALPODSTOCHECK + " pods in " + namespace,
+		LinkNames:   "",
+		Attachments: []Attachment{},
+		UnfurlLinks: false,
+		UnfurlMedia: false,
+		Markdown:    false,
+	}
+	url := os.Getenv("SLACK_URL")
+	payload.SendSlack(url)
 }
 
 func DeleteCompletedTask(namespace, pod, rStr string, kubecli settings.ClientSetInstance) error {

@@ -98,7 +98,9 @@ func getPodLogs(pod *v1.Pod, clientset *kubernetes.Clientset) (string, error) {
 		req := nsPodsData.GetLogs(pod.Name, &podLogOpts)
 		podLogs, err := req.Stream(context.TODO())
 
-		errorHandler.PrintError(err)
+		if err != nil {
+			return "", err
+		}
 
 		defer podLogs.Close()
 		_, err = io.Copy(buf, podLogs)
