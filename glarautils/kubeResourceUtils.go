@@ -89,6 +89,13 @@ func SendmsgToSlack(PodName string, namespace string) {
 		UnfurlMedia: false,
 		Markdown:    false,
 	}
+
 	url := os.Getenv("SLACK_URL")
-	payload.SendSlack(url)
+
+	if url != "" {
+		payload.SendSlack(url)
+	} else {
+		log.Println("Error with SLACK URL")
+	}
+
 }
