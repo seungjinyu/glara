@@ -50,7 +50,7 @@ var inspectCmd = &cobra.Command{
 		fmt.Println("Client setting is now initialized")
 		settings.ClientSetting(&kubecli, KUBE_ENV)
 		fmt.Println("Client setting completed")
-		glarautils.InspectPod(namespace, pod, rStr, kubecli)
+		glarautils.InspectPodLogPhase(namespace, pod, rStr, kubecli)
 
 	},
 }

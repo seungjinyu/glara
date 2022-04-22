@@ -2,6 +2,7 @@ package glarautils
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -76,7 +77,13 @@ func (payload *Payload) AddAttachment(attachment Attachment) *Payload {
 
 // SendSlack sends the message
 func (payload *Payload) SendSlack(url string) {
-	client := &http.Client{}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	client := &http.Client{Transport: tr}
+
 	b, err := json.Marshal(payload)
 	errorHandler.PrintError(err)
 

@@ -49,7 +49,7 @@ var deletecomtaskCmd = &cobra.Command{
 		fmt.Println("Client setting is now initialized")
 		settings.ClientSetting(&kubecli, KUBE_ENV)
 		fmt.Println("Client setting completed")
-		glarautils.DeleteCompletedTask(namespace, pod, rStr, kubecli)
+		glarautils.DeleteTaskCompletedPhase(namespace, pod, rStr, kubecli)
 
 	},
 }
