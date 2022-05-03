@@ -25,4 +25,7 @@ jobs:
             file: ./dockerfiles/dockerfile
             push: true
             tags: '${{ secrets.REGISTRY_URL }}/glara:latest'
+            builder: ${{ steps.buildx.outputs.name }}
+            cache-from: 'type=registry,ref=${{ secrets.REGISTRY_URL }}/glara:buildcache'
+            cache-to: 'type=registry,ref=${{ secrets.REGISTRY_URL }}/glara:buildcache,mode=max'
             
