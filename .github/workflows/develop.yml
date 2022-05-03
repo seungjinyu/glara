@@ -1,0 +1,7 @@
+name: develop
+on: [push]
+jobs:
+  Deploy-On-Develop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: Pushed new commit on the source code 
