@@ -1,7 +1,27 @@
 name: develop
 on: [push]
 jobs:
-  Deploy-On-Develop:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Push a new commit"
+  deploy:
+      runs-on: self-hosted
+      steps:
+        -
+          name: Checkout 
+          uses: actions/checkout@v2
+        -
+          name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v1
+        - 
+          name: Login to private registry
+          uses: docker/login-action@v1
+          with:
+            registry: ${{ secrets.REGISTRY_URL }}
+            username: ${{ secrets.REGISTRY_USERNAME }}
+            password: ${{ secrets.REGISTRY_PASSWORD }}
+        -
+          name: Build and push
+          uses: docker/build-push-action@v2
+          with:
+            context: ./dockerfiles/
+            file: ./dockerfiles/Dockerfile
+            push: true
+            
