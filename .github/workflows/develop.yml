@@ -22,6 +22,7 @@ jobs:
           uses: docker/build-push-action@v2
           with:
             context: ./dockerfiles/
-            file: ./dockerfiles/Dockerfile
+            file: ./dockerfiles/dockerfile
             push: true
+            tag: register.develop.vsmart00.com/glara:latest
             
