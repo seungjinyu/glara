@@ -28,3 +28,15 @@ jobs:
           registry: ${{ secrets.REGISTRY_URL }}
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
+      
+      - name: Set-Kubernetes-Credentials
+        id: set-kubeconfig
+        uses: actions/kubectl@master
+        env:
+          KUBE_CONFIG: ${{ secrets.DEVELOP_KUBE_CONFIG}}
+
+      - name : Restart-Glara-deployment
+        id: restart-glara
+        uses: actions-hub/kubectl@master
+        with: 
+          args: rollout restart deployment glara --namespace=glara
