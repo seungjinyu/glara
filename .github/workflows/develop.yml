@@ -31,7 +31,7 @@ jobs:
       
       - name: Set-Kubernetes-Credentials
         id: set-kubeconfig
-        uses: actions/kubectl@master
+        uses: actions-hub/kubectl@master
         env:
           KUBE_CONFIG: ${{ secrets.DEVELOP_KUBE_CONFIG}}
 
