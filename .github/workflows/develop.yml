@@ -1,15 +1,20 @@
-name: develop
+name: develop-deploy
 on: [push]
 jobs:  
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
+      - name: Setting AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
       - name: Checkout
         uses: actions/checkout@v2
-        # with:
-        #   submodules: "recursive"
-        #   token: ${{ secrets.TOKEN }}
+
       - name: Build
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -29,12 +34,6 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       
-      # - name: Set-Kubernetes-Credentials
-      #   id: set-kubeconfig
-      #   uses: actions-hub/kubectl@master
-      #   env:
-      #     KUBE_CONFIG: ${{ secrets.DEVELOP_KUBE_CONFIG}}
-
       - name : Restart-Glara-deployment
         id: restart-glara
         uses: actions-hub/kubectl@master
@@ -42,9 +41,3 @@ jobs:
           KUBE_CONFIG: ${{ secrets.DEVELOP_KUBE_CONFIG}}
         with: 
           args: rollout restart deployment glara --namespace=glara
-      # - name: Restart
-      #   uses: kodermax/kubectl-aws-eks@master
-      #   env:
-      #     KUBE_CONFIG_DATA: ${{ secrets.DEVELOP_KUBE_CONFIG }}
-      #   with:
-      #     args: rollout restart deploy glara -n glara
