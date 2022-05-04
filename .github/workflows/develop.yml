@@ -15,24 +15,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Build
-        id: build-image
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: glara
-          tags: latest ${{ github.sha }}
-          containerfiles: |
-            ./dockerfiles/dockerfile
+      # - name: Build
+      #   id: build-image
+      #   uses: redhat-actions/buildah-build@v2
+      #   with:
+      #     image: glara
+      #     tags: latest ${{ github.sha }}
+      #     containerfiles: |
+      #       ./dockerfiles/dockerfile
 
-      - name: Push
-        id: push-image
-        uses: redhat-actions/push-to-registry@v2
-        with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.build-image.outputs.tags }}
-          registry: ${{ secrets.REGISTRY_URL }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+      # - name: Push
+      #   id: push-image
+      #   uses: redhat-actions/push-to-registry@v2
+      #   with:
+      #     image: ${{ steps.build-image.outputs.image }}
+      #     tags: ${{ steps.build-image.outputs.tags }}
+      #     registry: ${{ secrets.REGISTRY_URL }}
+      #     username: ${{ secrets.REGISTRY_USERNAME }}
+      #     password: ${{ secrets.REGISTRY_PASSWORD }}
       
       - name : Restart-Glara-deployment
         id: restart-glara
