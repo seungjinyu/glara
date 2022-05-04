@@ -15,32 +15,33 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
-      # - name: Build
-      #   id: build-image
-      #   uses: redhat-actions/buildah-build@v2
-      #   with:
-      #     image: glara
-      #     tags: latest ${{ github.sha }}
-      #     containerfiles: |
-      #       ./dockerfiles/dockerfile
+          
+      - name: Build
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: glara
+          tags: latest ${{ github.sha }}
+          containerfiles: |
+            ./dockerfiles/dockerfile
 
-      # - name: Push
-      #   id: push-image
-      #   uses: redhat-actions/push-to-registry@v2
-      #   with:
-      #     image: ${{ steps.build-image.outputs.image }}
-      #     tags: ${{ steps.build-image.outputs.tags }}
-      #     registry: ${{ secrets.REGISTRY_URL }}
-      #     username: ${{ secrets.REGISTRY_USERNAME }}
-      #     password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Push
+        id: push-image
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
       
-      # - name : Restart-Glara-deployment
-      #   id: restart-glara
-      #   uses: actions-hub/kubectl@master
-      #   env: 
-      #     KUBE_CONFIG: ${{ secrets.DEVELOP_KUBE_CONFIG}}
-      #   with: 
-      #     args: rollout restart deployment glara --namespace=glara
+      - name : Restart-Glara-deployment
+        id: restart-glara
+        uses: actions-hub/kubectl@master
+        env: 
+          KUBE_CONFIG: ${{ secrets.DEVELOP_KUBE_CONFIG}}
+        with: 
+          args: rollout restart deployment glara --namespace=glara
 
       - name: Trigger deploy
         uses: Jberlinsky/kubernetes-action@master
