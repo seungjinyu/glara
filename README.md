@@ -8,3 +8,5 @@ Basically using cobra framework to get arguments, using kubernetes api, client-g
 ## adding github actions for automatic deployment
 
 added test-branch for better performance
+
+testing branch is on its own
