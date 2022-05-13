@@ -7,6 +7,12 @@ services:
       context: ./
       dockerfile: dockerfiles/dockerfile
       network: host
+  standby:
+    image: registry.standby.vsmart00.com/glara
+    build:
+      context: ./
+      dockerfile: dockerfiles/dockerfile
+      network: host
   eksrussia:
     image: registry.russia.vsmart00.com/glara
     build:

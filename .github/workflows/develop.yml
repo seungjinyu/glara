@@ -35,7 +35,7 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
       
-      - name: Trigger deploy
+      - name: Restart-deployments
         uses: Jberlinsky/kubernetes-action@master
         env:
           KUBE_CONFIG_DATA: ${{ secrets.DEVELOP_KUBE_CONFIG }}
