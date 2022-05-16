@@ -46,7 +46,7 @@ func deletePodProcess(rs *models.GlaraPodInfoStack, namespace, pod, rStr string,
 
 		err := DeletePodInKube(namespace, tmp.PodName, kubecli.Clientset)
 		errorHandler.PrintError(err)
-		SendmsgToSlack(tmp.PodName, namespace)
+		// SendmsgToSlack(tmp.PodName, namespace)
 		deletePodProcess(rs, namespace, pod, rStr, kubecli)
 
 	} else {
