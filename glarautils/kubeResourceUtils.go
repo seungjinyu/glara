@@ -62,9 +62,10 @@ func checkLogStack(gs *models.GlaraPodInfoStack, rs *models.GlaraPodInfoStack, p
 		if strings.Contains(tmp.PodName, pod) {
 			if strings.Contains(tmp.PodLog, rStr) {
 				rs.Push(tmp)
-			} else {
-				log.Println(tmp.PodName, " does not contains that log")
 			}
+			// } else {
+			// 	// log.Println(tmp.PodName, " does not contains that log")
+			// }
 		} else {
 			log.Println(tmp.PodName, "Pod name is not included")
 		}
