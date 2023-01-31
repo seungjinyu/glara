@@ -5,6 +5,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building..'
+                docker build ./dockerfiles/dockerfile
             }
         }
         stage('Test') {
